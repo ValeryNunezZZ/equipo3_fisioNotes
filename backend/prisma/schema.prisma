@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// REG-01: Restricción de Perfiles - Un usuario solo puede tener un rol
+// REG-01: Restricción de Perfiles
 enum Rol {
   ADMIN
   FISIO
@@ -19,10 +19,8 @@ model Usuario {
   id_usuario       String   @id @default(uuid())
   rol              Rol
   email            String   @unique
-  password         String?  // Opcional hasta que se active la cuenta
-  token_sesion     String?  // Para almacenar el JWT
-  
-  // RF-03: Envío de correo de activación
+  password         String?  
+  token_sesion     String?  
   token_activacion String?
   expires_at       DateTime?
 
@@ -38,4 +36,69 @@ model PerfilFisio {
   nombre_completo    String
   cedula_profesional String
   estado_activacion  Boolean  @default(false)
+
+  pacientes          Paciente[]
+}
+
+// RF-04: Gestión de perfiles de pacientes[cite: 1]
+model Paciente {
+  id_paciente       String   @id @default(uuid())
+  id_fisioterapeuta String
+  fisioterapeuta    PerfilFisio @relation(fields: [id_fisioterapeuta], references: [id_perfil])
+  nombre            String
+  diagnostico       String   // RNF-01: Se cifrará con AES-256 en Node[cite: 1]
+  telefono          String
+
+  agendaDiaria      AgendaDiaria[]
+}
+
+// RF-05: Creación de planes desde catálogo[cite: 1]
+model CatalogoEjercicio {
+  id_ejercicio      String   @id @default(uuid())
+  nombre            String
+  descripcion       String?
+  zona_cuerpo       String?
+  url_imagen        String?
+
+  planes            PlanEjercicio[]
+  agenda            AgendaDiaria[]
+}
+
+// RF-06: Configuración del Plan de Ejercicios[cite: 1]
+model PlanEjercicio {
+  id_plan           String   @id @default(uuid())
+  id_paciente       String
+  id_ejercicio      String
+  ejercicio         CatalogoEjercicio @relation(fields: [id_ejercicio], references: [id_ejercicio])
+  
+  frecuencia_dias   Json     // Array de días (L-M-M-J-V-S-D)[cite: 1]
+  fecha_inicio      DateTime
+  fecha_fin         DateTime
+  series            Int
+  repeticiones      Int
+}
+
+// RF-07: Generación de Agenda Diaria del Paciente[cite: 1]
+model AgendaDiaria {
+  id_agenda         String   @id @default(uuid())
+  id_paciente       String
+  paciente          Paciente @relation(fields: [id_paciente], references: [id_paciente])
+  fecha             DateTime
+  id_ejercicio      String
+  ejercicio         CatalogoEjercicio @relation(fields: [id_ejercicio], references: [id_ejercicio])
+  estado_completado Boolean  @default(false)
+
+  reporteEstado     ReporteEstado?
+}
+
+// RF-11: Registro Diario de Estado y Cierre[cite: 1]
+model ReporteEstado {
+  id_reporte        String   @id @default(uuid())
+  id_agenda         String   @unique
+  agenda            AgendaDiaria @relation(fields: [id_agenda], references: [id_agenda])
+  
+  nivel_dolor       Int      // Restringido de 1 a 10[cite: 1]
+  comentarios       String?
+  fecha_reporte     DateTime @default(now())
+  leido             Boolean  @default(false) // RF-09: Para alerta visual en tablero[cite: 1]
 }
