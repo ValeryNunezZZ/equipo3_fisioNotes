@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// REG-01: Restricción de Perfiles - Un usuario solo puede tener un rol
+enum Rol {
+  ADMIN
+  FISIO
+  PACIENTE
+}
+
+// RF-01: Gestión de Usuarios
+model Usuario {
+  id_usuario       String   @id @default(uuid())
+  rol              Rol
+  email            String   @unique
+  password         String?  // Opcional hasta que se active la cuenta
+  token_sesion     String?  // Para almacenar el JWT
+  
+  // RF-03: Envío de correo de activación
+  token_activacion String?
+  expires_at       DateTime?
+
+  perfilFisio      PerfilFisio?
+}
+
+// RF-02: Registro de Fisioterapeutas
+model PerfilFisio {
+  id_perfil          String   @id @default(uuid())
+  id_usuario         String   @unique
+  usuario            Usuario  @relation(fields: [id_usuario], references: [id_usuario])
+  
+  nombre_completo    String
+  cedula_profesional String
+  estado_activacion  Boolean  @default(false)
+}
