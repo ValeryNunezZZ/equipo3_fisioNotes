@@ -21,9 +21,9 @@ function FisioDashboard() {
   const [pacienteData, setPacienteData] = useState({ nombre: '', telefono: '', diagnostico: '', email: '', password: '' });
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
 
-  // NUEVOS ESTADOS PARA EL CATÁLOGO DE EJERCICIOS
+  // NUEVOS ESTADOS PARA EL CATÁLOGO DE EJERCICIOS (Incluye url_video)
   const [mostrarFormEjercicio, setMostrarFormEjercicio] = useState(false);
-  const [ejercicioData, setEjercicioData] = useState({ nombre: '', descripcion: '', zona_cuerpo: '', url_imagen: '' });
+  const [ejercicioData, setEjercicioData] = useState({ nombre: '', descripcion: '', zona_cuerpo: '', url_imagen: '', url_video: '' });
 
   // NUEVOS ESTADOS PARA ASIGNAR PLANES
   const [pacienteParaPlan, setPacienteParaPlan] = useState(null);
@@ -109,7 +109,7 @@ function FisioDashboard() {
     e.preventDefault();
     try {
       await axios.post('http://localhost:3000/api/ejercicios', ejercicioData);
-      setEjercicioData({ nombre: '', descripcion: '', zona_cuerpo: '', url_imagen: '' });
+      setEjercicioData({ nombre: '', descripcion: '', zona_cuerpo: '', url_imagen: '', url_video: '' });
       setMostrarFormEjercicio(false);
       fetchEjercicios(); // Refrescar catálogo
       alert("Ejercicio agregado con éxito");
@@ -186,13 +186,13 @@ function FisioDashboard() {
         {vistaActiva === 'pacientes' ? (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
-                <h1 style={{ color: '#2C3E50', margin: 0 }}>Mis Pacientes</h1>
-                <button onClick={() => setMostrarFormulario(!mostrarFormulario)}>
+              <h1 style={{ color: '#2C3E50', margin: 0 }}>Mis Pacientes</h1>
+              <button onClick={() => setMostrarFormulario(!mostrarFormulario)} style={{ padding: '10px 20px', backgroundColor: '#27AE60', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
                 {mostrarFormulario ? 'Cancelar' : '+ Añadir Paciente'}
               </button>
             </div>
 
-            {/* WIDGET ALERTAS */}
+            {/* WIDGET ALERTAS CON NOMBRE DESTACADO */}
             {alertas.length > 0 && (
               <div style={{ backgroundColor: '#FEF2F2', borderLeft: '5px solid #EF4444', padding: '20px', borderRadius: '8px', marginBottom: '25px' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#B91C1C' }}>⚠️ Atención Requerida (Dolor &gt; 7)</h3>
@@ -262,7 +262,7 @@ function FisioDashboard() {
           // ==========================================
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
-            <div>
+              <div>
                 <h1 style={{ color: '#2C3E50', margin: 0 }}>Catálogo de Ejercicios</h1>
                 <p style={{ color: '#7F8C8D', margin: '5px 0 0 0' }}>Agrega y gestiona los ejercicios para tus planes.</p>
               </div>
@@ -271,7 +271,7 @@ function FisioDashboard() {
               </button>
             </div>
 
-            {/* FORMULARIO AGREGAR EJERCICIO */}
+            {/* FORMULARIO AGREGAR EJERCICIO CON CAMPO DE VIDEO */}
             {mostrarFormEjercicio && (
               <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', marginBottom: '20px', borderLeft: '5px solid #27AE60' }}>
                 <h3>Detalles del Ejercicio</h3>
@@ -281,6 +281,7 @@ function FisioDashboard() {
                     <input type="text" placeholder="Zona (ej. Hombro derecho)" value={ejercicioData.zona_cuerpo} onChange={(e) => setEjercicioData({...ejercicioData, zona_cuerpo: e.target.value})} required style={{ padding: '10px', flex: 1, border: '1px solid #ccc', borderRadius: '4px' }} />
                   </div>
                   <input type="url" placeholder="URL de imagen de referencia (opcional)" value={ejercicioData.url_imagen} onChange={(e) => setEjercicioData({...ejercicioData, url_imagen: e.target.value})} style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }} />
+                  <input type="url" placeholder="URL de video de YouTube (opcional)" value={ejercicioData.url_video} onChange={(e) => setEjercicioData({...ejercicioData, url_video: e.target.value})} style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }} />
                   <textarea placeholder="Descripción y recomendaciones de técnica" value={ejercicioData.descripcion} onChange={(e) => setEjercicioData({...ejercicioData, descripcion: e.target.value})} required rows="2" style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }}></textarea>
                   <button type="submit" style={{ padding: '10px', backgroundColor: '#27AE60', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold' }}>Guardar en Catálogo</button>
                 </form>
@@ -291,17 +292,20 @@ function FisioDashboard() {
               {ejercicios.length === 0 ? <p>El catálogo está vacío. ¡Agrega tu primer ejercicio!</p> : (
                 ejercicios.map((ej) => (
                   <div key={ej.id_ejercicio} style={{ backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+                    
+                    {/* IMAGEN DEL EJERCICIO CON ETIQUETA IMG Y ONERROR */}
                     <div style={{ height: '160px', backgroundColor: '#ECF0F1', overflow: 'hidden' }}>
-                    <img 
+                      <img 
                         src={ej.url_imagen || 'https://via.placeholder.com/300x160?text=Sin+Imagen'} 
                         alt={ej.nombre}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         onError={(e) => {
-                        e.target.onerror = null; // Evita un bucle infinito si la de repuesto también falla
-                        e.target.src = 'https://via.placeholder.com/300x160?text=Enlace+Protegido/Roto';
+                          e.target.onerror = null; 
+                          e.target.src = 'https://via.placeholder.com/300x160?text=Enlace+Roto';
                         }}
-                    />
+                      />
                     </div>
+
                     <div style={{ padding: '15px' }}>
                       <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#2980B9', backgroundColor: '#EBF5FB', padding: '3px 8px', borderRadius: '10px' }}>{ej.zona_cuerpo}</span>
                       <h3 style={{ margin: '10px 0', fontSize: '18px', color: '#2C3E50' }}>{ej.nombre}</h3>
@@ -365,7 +369,6 @@ function FisioDashboard() {
                   <div>
                     <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '10px' }}>¿Qué días debe hacerlo?</label>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      {/* En JavaScript, getDay() devuelve: 0=Domingo, 1=Lunes, 2=Martes, etc. */}
                       {[{n: 1, l: 'Lun'}, {n: 2, l: 'Mar'}, {n: 3, l: 'Mié'}, {n: 4, l: 'Jue'}, {n: 5, l: 'Vie'}, {n: 6, l: 'Sáb'}, {n: 0, l: 'Dom'}].map(dia => (
                         <button type="button" key={dia.n} onClick={() => toggleDia(dia.n)} 
                           style={{ padding: '10px', width: '45px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', border: planData.dias.includes(dia.n) ? 'none' : '1px solid #ccc', backgroundColor: planData.dias.includes(dia.n) ? '#8E44AD' : 'white', color: planData.dias.includes(dia.n) ? 'white' : '#7F8C8D' }}>
@@ -384,7 +387,7 @@ function FisioDashboard() {
           </div>
         )}
 
-        {/* MODAL DE HISTORIAL DE PROGRESO */}
+        {/* MODAL DE HISTORIAL DE PROGRESO CON BITÁCORA */}
         {pacienteSeleccionado && (
           <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
             <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '12px', width: '90%', maxWidth: '700px' }}>
@@ -400,21 +403,45 @@ function FisioDashboard() {
                   <button onClick={() => setPacienteSeleccionado(null)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}>✖</button>
                 </div>
               </div>
+              
               {datosProgreso.length === 0 ? (
                 <div style={{ padding: '40px', textAlign: 'center', color: '#7F8C8D', backgroundColor: '#F8F9FA', borderRadius: '8px' }}><p>Aún no hay reportes registrados.</p></div>
               ) : (
-                <div style={{ height: '350px', width: '100%' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={datosProgreso} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                      <XAxis dataKey="fecha" stroke="#7F8C8D" fontSize={12} />
-                      <YAxis domain={[0, 10]} stroke="#7F8C8D" fontSize={12} />
-                      <Tooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="dolor" stroke="#E74C3C" strokeWidth={3} name="Nivel de Dolor (1-10)" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
+                <>
+                  {/* Gráfica de dolor */}
+                  <div style={{ height: '250px', width: '100%' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={datosProgreso} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                        <XAxis dataKey="fecha" stroke="#7F8C8D" fontSize={12} />
+                        <YAxis domain={[0, 10]} stroke="#7F8C8D" fontSize={12} />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="dolor" stroke="#E74C3C" strokeWidth={3} name="Nivel de Dolor (1-10)" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* BITÁCORA DE COMENTARIOS */}
+                  <div style={{ marginTop: '25px', borderTop: '2px solid #ECF0F1', paddingTop: '15px' }}>
+                    <h4 style={{ color: '#2C3E50', margin: '0 0 15px 0' }}>💬 Bitácora de Comentarios</h4>
+                    <div style={{ maxHeight: '150px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {datosProgreso.filter(d => d.comentarios).length === 0 ? (
+                        <p style={{ fontSize: '14px', color: '#7F8C8D', fontStyle: 'italic' }}>El paciente no ha dejado comentarios adicionales.</p>
+                      ) : (
+                        datosProgreso.filter(d => d.comentarios).map((d, i) => (
+                          <div key={i} style={{ backgroundColor: '#F8F9FA', padding: '10px 15px', borderRadius: '8px', borderLeft: '4px solid #3498DB' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                              <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#7F8C8D' }}>📅 {d.fecha}</span>
+                              <span style={{ fontSize: '12px', fontWeight: 'bold', color: d.dolor >= 8 ? '#E74C3C' : '#F39C12' }}>Dolor: {d.dolor}/10</span>
+                            </div>
+                            <p style={{ margin: 0, fontSize: '14px', color: '#2C3E50' }}>"{d.comentarios}"</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           </div>

@@ -64,6 +64,7 @@ model CatalogoEjercicio {
   descripcion       String?
   zona_cuerpo       String?
   url_imagen        String?
+  url_video         String?
 
   planes            PlanEjercicio[]
   agenda            AgendaDiaria[]

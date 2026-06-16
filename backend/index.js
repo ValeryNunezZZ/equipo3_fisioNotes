@@ -314,24 +314,17 @@ app.get('/api/pacientes/:email_fisio', async (req, res) => {
 // -------------------------------------------------------------
 
 // 1. Agregar un nuevo ejercicio al catálogo
+// 1. Agregar un nuevo ejercicio al catálogo
+// 1. Agregar un nuevo ejercicio al catálogo
 app.post('/api/ejercicios', async (req, res) => {
   try {
-    const { nombre, descripcion, zona_cuerpo, url_imagen } = req.body;
+    const { nombre, descripcion, zona_cuerpo, url_imagen, url_video } = req.body; // <--- Añadimos url_video
 
     const nuevoEjercicio = await prisma.catalogoEjercicio.create({
-      data: {
-        nombre,
-        descripcion,
-        zona_cuerpo,
-        url_imagen
-      }
+      data: { nombre, descripcion, zona_cuerpo, url_imagen, url_video }
     });
 
-    res.status(201).json({ 
-      message: 'Ejercicio agregado al catálogo con éxito', 
-      data: nuevoEjercicio 
-    });
-
+    res.status(201).json({ message: 'Ejercicio agregado al catálogo con éxito', data: nuevoEjercicio });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error interno al guardar el ejercicio' });
@@ -432,42 +425,34 @@ app.post('/api/planes', async (req, res) => {
 // -------------------------------------------------------------
 // ENDPOINT: RF-07 Agenda Diaria del Paciente (Hoy)
 // -------------------------------------------------------------
-// -------------------------------------------------------------
-// ENDPOINT: RF-07 Agenda Diaria del Paciente (Hoy)
-// -------------------------------------------------------------
 app.get('/api/agenda/:id_paciente/hoy', async (req, res) => {
   try {
     const { id_paciente } = req.params;
-
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0); 
-    
-    const manana = new Date(hoy);
-    manana.setDate(manana.getDate() + 1); 
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0); 
+    const manana = new Date(hoy); manana.setDate(manana.getDate() + 1); 
 
     const agendaCruda = await prisma.agendaDiaria.findMany({
-      where: {
-        id_paciente: id_paciente,
-        fecha: {
-          gte: hoy,    
-          lt: manana   
-        }
-      },
-      include: {
-        ejercicio: true 
-      }
+      where: { id_paciente: id_paciente, fecha: { gte: hoy, lt: manana } },
+      include: { ejercicio: true }
     });
 
-    // 🛠️ FILTRO ANTI-DUPLICADOS: 
-    // Comparamos los IDs de los ejercicios. Si el doctor lo recetó 
-    // dos veces para el mismo día por error, solo mostramos uno.
-    const agendaSinDuplicados = agendaCruda.filter((item, index, self) =>
-      index === self.findIndex((t) => t.id_ejercicio === item.id_ejercicio)
-    );
+    // Buscamos el plan recetado para extraer sus series y repeticiones
+    const planes = await prisma.planEjercicio.findMany({ where: { id_paciente: id_paciente } });
 
-    res.json(agendaSinDuplicados);
+    // Filtramos duplicados Y agregamos la dosificación exacta
+    const agendaFinal = agendaCruda.filter((item, index, self) =>
+      index === self.findIndex((t) => t.id_ejercicio === item.id_ejercicio)
+    ).map(item => {
+      const plan = planes.find(p => p.id_ejercicio === item.id_ejercicio);
+      return {
+        ...item,
+        series: plan ? plan.series : 0,
+        repeticiones: plan ? plan.repeticiones : 0
+      };
+    });
+
+    res.json(agendaFinal);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: 'Error al obtener la agenda de hoy' });
   }
 });
@@ -616,15 +601,19 @@ app.patch('/api/reportes/:id_reporte/leido', async (req, res) => {
 // -------------------------------------------------------------
 // ENDPOINT: RF-08 Monitoreo de Progreso (VERSIÓN DIRECTA Y ROBUSTA)
 // -------------------------------------------------------------
+// -------------------------------------------------------------
+// ENDPOINT: RF-08 Monitoreo de Progreso (VERSIÓN DIRECTA Y ROBUSTA)
+// -------------------------------------------------------------
+// -------------------------------------------------------------
+// ENDPOINT: RF-08 Monitoreo de Progreso (VERSIÓN DIRECTA Y ROBUSTA)
+// -------------------------------------------------------------
 app.get('/api/pacientes/:id_paciente/progreso', async (req, res) => {
   try {
     const { id_paciente } = req.params;
 
-    // 1. Buscamos directo en la AgendaDiaria del paciente
     const agendaConReportes = await prisma.agendaDiaria.findMany({
       where: {
         id_paciente: id_paciente,
-        // Solo traemos los días que SÍ tienen un reporte guardado
         reporteEstado: { isNot: null } 
       },
       include: {
@@ -633,26 +622,40 @@ app.get('/api/pacientes/:id_paciente/progreso', async (req, res) => {
       }
     });
 
-    // 2. Transformamos la información de forma segura
-    const datosGrafica = agendaConReportes.map(agenda => {
-      // Usamos un bloque try-catch interno por si el formato de la fecha de la BD es distinto
+    const mapFechas = new Map();
+
+    agendaConReportes.forEach(agenda => {
       let fechaFormateada = "Sin Fecha";
       try {
         const fechaCruda = agenda.reporteEstado.fecha_reporte || new Date();
-        fechaFormateada = new Date(fechaCruda).toISOString().split('T')[0];
+        // 🛠️ CORRECCIÓN: Ajustamos la zona horaria para que no brinque de día
+        const d = new Date(fechaCruda);
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        fechaFormateada = d.toISOString().split('T')[0];
       } catch (e) {
-        console.log("Aviso: Formato de fecha inusual en el reporte", agenda.reporteEstado.id_reporte);
+        console.log("Error de fecha", e);
       }
 
-      return {
-        fecha: fechaFormateada,
-        dolor: agenda.reporteEstado.nivel_dolor,
-        ejercicio: agenda.ejercicio.nombre,
-        comentarios: agenda.reporteEstado.comentarios
-      };
+      const comentarioActual = agenda.reporteEstado.comentarios;
+
+      if (!mapFechas.has(fechaFormateada)) {
+        // Es el primer ejercicio que revisamos de este día
+        mapFechas.set(fechaFormateada, {
+          fecha: fechaFormateada,
+          dolor: agenda.reporteEstado.nivel_dolor,
+          comentarios: comentarioActual || ""
+        });
+      } else {
+        // 🛠️ RESCATE: Si ya registramos el día, pero no atrapó el comentario, 
+        // y este ejercicio SÍ lo tiene, lo sobreescribimos y lo rescatamos.
+        const diaGuardado = mapFechas.get(fechaFormateada);
+        if (!diaGuardado.comentarios && comentarioActual) {
+          diaGuardado.comentarios = comentarioActual;
+        }
+      }
     });
 
-    // 3. Ordenamos cronológicamente (del más antiguo al más reciente)
+    const datosGrafica = Array.from(mapFechas.values());
     datosGrafica.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
     res.json(datosGrafica);
@@ -662,7 +665,6 @@ app.get('/api/pacientes/:id_paciente/progreso', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener el historial de progreso' });
   }
 });
-
 // -------------------------------------------------------------
 // ENDPOINT: Registro de Personal (Fisioterapeutas vía Admin)
 // -------------------------------------------------------------

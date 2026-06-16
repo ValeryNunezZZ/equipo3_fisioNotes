@@ -125,11 +125,11 @@ function PacienteDashboard() {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#F3F4F6', fontFamily: 'sans-serif', paddingBottom: '50px' }}>
       
-      {/* Navbar Minimalista */}
-    <nav style={{ backgroundColor: 'white', padding: '20px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-    <h2 style={{ margin: 0, color: '#3B82F6' }}>FisioNotes <span style={{ color: '#9CA3AF', fontSize: '16px', fontWeight: 'normal' }}>| Mi Recuperación</span></h2>
-    <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
-        <span style={{ color: '#4B5563', fontWeight: 'bold' }}>Hola, {perfil.nombre}</span>
+      {/* Navbar Minimalista (Corregido con flexWrap) */}
+      <nav style={{ backgroundColor: 'white', padding: '20px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+        <h2 style={{ margin: 0, color: '#3B82F6' }}>FisioNotes <span style={{ color: '#9CA3AF', fontSize: '16px', fontWeight: 'normal' }}>| Mi Recuperación</span></h2>
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ color: '#4B5563', fontWeight: 'bold' }}>Hola, {perfil.nombre}</span>
           <button onClick={cerrarSesion} style={{ padding: '8px 16px', backgroundColor: '#EF4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>Salir</button>
         </div>
       </nav>
@@ -149,26 +149,48 @@ function PacienteDashboard() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            {/* Lista de Tareas */}
+            {/* Lista de Tareas con Series, Repeticiones y YouTube */}
             {agendaHoy.map((item) => (
               <div 
                 key={item.id_agenda} 
-                onClick={() => !rutinaFinalizada && toggleEjercicio(item.id_agenda, item.estado_completado)}
+                onClick={(e) => {
+                  // Evitamos que al dar clic al enlace de YouTube se marque como completado
+                  if(e.target.tagName !== 'A') !rutinaFinalizada && toggleEjercicio(item.id_agenda, item.estado_completado);
+                }}
                 style={{ 
                   backgroundColor: item.estado_completado ? '#EFF6FF' : 'white', 
                   border: item.estado_completado ? '2px solid #3B82F6' : '1px solid #E5E7EB',
-                  padding: '20px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '20px',
+                  padding: '15px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '20px',
                   cursor: rutinaFinalizada ? 'default' : 'pointer', transition: 'all 0.2s', opacity: rutinaFinalizada ? 0.7 : 1
                 }}>
                 
                 {/* Checkbox Visual */}
-                <div style={{ width: '28px', height: '28px', borderRadius: '50%', border: item.estado_completado ? 'none' : '2px solid #D1D5DB', backgroundColor: item.estado_completado ? '#3B82F6' : 'transparent', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', fontWeight: 'bold' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', border: item.estado_completado ? 'none' : '2px solid #D1D5DB', backgroundColor: item.estado_completado ? '#3B82F6' : 'transparent', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', fontWeight: 'bold', flexShrink: 0 }}>
                   {item.estado_completado && '✓'}
                 </div>
 
                 <div style={{ flexGrow: 1 }}>
                   <h3 style={{ margin: '0 0 5px 0', color: '#1F2937', textDecoration: item.estado_completado ? 'line-through' : 'none' }}>{item.ejercicio.nombre}</h3>
-                  <p style={{ margin: 0, color: '#6B7280', fontSize: '14px' }}>Zona: {item.ejercicio.zona_cuerpo}</p>
+                  <p style={{ margin: '0 0 8px 0', color: '#4B5563', fontSize: '14px', fontWeight: 'bold' }}>
+                    🔄 {item.series} Series | 🎯 {item.repeticiones} Repeticiones
+                  </p>
+                  
+                  {/* Botón de YouTube */}
+                  {item.ejercicio.url_video && (
+                    <a href={item.ejercicio.url_video} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', backgroundColor: '#FEF2F2', color: '#DC2626', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textDecoration: 'none', border: '1px solid #FCA5A5' }}>
+                      ▶️ Ver tutorial
+                    </a>
+                  )}
+                </div>
+
+                {/* Imagen del Ejercicio (Corregida con etiqueta <img>) */}
+                <div style={{ width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', backgroundColor: '#ECF0F1', flexShrink: 0, border: '1px solid #E5E7EB' }}>
+                  <img 
+                    src={item.ejercicio.url_imagen || 'https://via.placeholder.com/150?text=FisioNotes'} 
+                    alt={item.ejercicio.nombre}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/150?text=Sin+Imagen'; }}
+                  />
                 </div>
               </div>
             ))}
