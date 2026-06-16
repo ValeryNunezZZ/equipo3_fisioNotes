@@ -46,8 +46,13 @@ model Paciente {
   id_fisioterapeuta String
   fisioterapeuta    PerfilFisio @relation(fields: [id_fisioterapeuta], references: [id_perfil])
   nombre            String
+  email             String   @unique
   diagnostico       String   // RNF-01: Se cifrará con AES-256 en Node[cite: 1]
   telefono          String
+  
+  // para definir el alta medica
+  estado_tratamiento String   @default("ACTIVO") // Puede ser "ACTIVO" o "RECUPERADO"
+  fecha_alta         DateTime?
 
   agendaDiaria      AgendaDiaria[]
 }
