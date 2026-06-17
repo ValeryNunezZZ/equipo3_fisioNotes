@@ -1,0 +1,58 @@
+/* ==========================================
+   PALETA DE COLORES Y VARIABLES - PREMIUM
+   ========================================== */
+:root {
+  --primary: #3B82F6;        
+  --primary-hover: #2563EB;
+  --primary-glow: rgba(59, 130, 246, 0.15);
+  
+  --secondary: #0F172A;      /* Azul ultra oscuro para contraste premium */
+  --secondary-light: #1E293B;
+  
+  --success: #10B981;        
+  --success-glow: rgba(16, 185, 129, 0.2);
+  --danger: #EF4444;         
+  
+  --bg-app: #F8FAFC;         /* Un gris ligeramente azulado, muy elegante */
+  --bg-surface: #FFFFFF;     
+  
+  --text-main: #0F172A;      
+  --text-muted: #64748B;     
+  --border-color: #E2E8F0;   
+
+  /* Sombras sofisticadas de múltiples capas */
+  --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 10px -4px rgba(15, 23, 42, 0.08);
+  --shadow-floating: 0 20px 40px -10px rgba(15, 23, 42, 0.12);
+  
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+#root { width: 100vw; min-height: 100vh; display: flex; flex-direction: column; }
+
+h1, h2, h3, h4 { color: var(--text-main); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+
+button { font-family: inherit; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+button:hover { transform: translateY(-2px); }
+button:active { transform: translateY(0) scale(0.98); }
+
+/* --- Scrollbar Personalizada y Elegante --- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }

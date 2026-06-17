@@ -1,0 +1,92 @@
+/* ==========================================
+   DISEÑO DEL FISIO (Estilo Inmersivo y Gamificado)
+   ========================================== */
+.fisio-wrap { display: flex; height: 100vh; overflow: hidden; background-color: var(--bg-app); }
+
+/* Menú Lateral: Glassmorphism idéntico al nav del paciente */
+.fisio-sidebar {
+  width: 280px; 
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  padding: 40px 25px; display: flex; flex-direction: column;
+  border-right: 1px solid rgba(226, 232, 240, 0.6); box-shadow: var(--shadow-sm); z-index: 10;
+}
+
+.fisio-sidebar h2 { margin: 0; font-size: 28px; color: var(--primary); font-weight: 800; }
+.fisio-sidebar .doc-name { color: var(--text-muted); font-size: 15px; font-weight: 600; margin-bottom: 40px; display: block; margin-top: 5px; }
+
+.sidebar-nav { display: flex; flex-direction: column; gap: 12px; flex-grow: 1; }
+.sidebar-link {
+  color: var(--text-muted); text-decoration: none; padding: 16px 20px; border-radius: var(--radius-lg);
+  cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: space-between;
+}
+.sidebar-link:hover { transform: translateX(6px) scale(1.02); background: #F8FAFC; color: var(--text-main); }
+.sidebar-link.active { 
+  background: linear-gradient(145deg, #ffffff 0%, #EFF6FF 100%); 
+  color: var(--primary); border: 1px solid var(--primary); 
+  box-shadow: 0 10px 25px var(--primary-glow); 
+}
+.badge { background-color: var(--danger); color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+
+/* Contenido Principal */
+.fisio-main { flex-grow: 1; padding: 50px; overflow-y: auto; scroll-behavior: smooth; animation: slideFade 0.6s ease-out; }
+.header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
+.header-section h1 { font-size: 32px; margin: 0; }
+.header-section p { color: var(--text-muted); margin-top: 8px; font-size: 15px; }
+
+/* Paneles con física elástica (idéntico a la evaluación del paciente) */
+.card-panel { 
+  background-color: var(--bg-surface); padding: 35px; border-radius: var(--radius-xl); 
+  box-shadow: var(--shadow-sm); margin-bottom: 35px; border: 1px solid var(--border-color); 
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+}
+.card-panel:hover { transform: translateY(-4px); box-shadow: var(--shadow-floating); border-color: var(--primary); }
+
+/* Alertas Rojas Bouncy */
+.alert-box { 
+  background: linear-gradient(145deg, #ffffff 0%, #FEF2F2 100%); 
+  border-left: 6px solid var(--danger); padding: 30px; border-radius: var(--radius-xl); 
+  box-shadow: 0 10px 25px rgba(239, 68, 68, 0.15); margin-bottom: 35px; border-top: 1px solid var(--border-color); border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.alert-box:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 15px 35px rgba(239, 68, 68, 0.25); }
+.alert-item { background: white; padding: 20px; border-radius: var(--radius-md); border: 1px solid #FCA5A5; margin-top: 15px; display: flex; flex-direction: column; gap: 12px; }
+
+/* Tabla que simula tarjetas apiladas */
+.styled-table { width: 100%; border-collapse: separate; border-spacing: 0 15px; margin-top: -15px; }
+.styled-table th { padding: 0 20px; text-align: left; border: none; color: var(--text-muted); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.styled-table td { background-color: var(--bg-surface); padding: 20px; border: 1px solid var(--border-color); border-width: 1px 0; vertical-align: middle; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.styled-table td:first-child { border-radius: var(--radius-lg) 0 0 var(--radius-lg); border-left: 1px solid var(--border-color); }
+.styled-table td:last-child { border-radius: 0 var(--radius-lg) var(--radius-lg) 0; border-right: 1px solid var(--border-color); }
+.styled-table tbody tr { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+/* Hover gamificado en filas de la tabla */
+.styled-table tbody tr:hover td { transform: scale(1.01) translateY(-3px); box-shadow: var(--shadow-floating); border-color: var(--primary); z-index: 2; position: relative; background: linear-gradient(145deg, #ffffff 0%, #F8FAFC 100%); }
+
+/* Grid de Catálogo (Idéntico a tarjeta-ejercicio del paciente) */
+.catalogo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+.catalogo-card { 
+  background-color: var(--bg-surface); border-radius: var(--radius-xl); overflow: hidden; 
+  box-shadow: var(--shadow-sm); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+  border: 1px solid var(--border-color); display: flex; flex-direction: column; 
+}
+.catalogo-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: var(--shadow-floating); border-color: var(--primary); }
+.catalogo-img { height: 180px; background-color: #F8FAFC; overflow: hidden; border-bottom: 1px solid var(--border-color); }
+.catalogo-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.catalogo-card:hover .catalogo-img img { transform: scale(1.1); }
+.catalogo-info { padding: 25px; }
+
+/* Inputs limpios */
+.form-input { width: 100%; padding: 14px 16px; border: 2px solid var(--border-color); border-radius: var(--radius-md); font-size: 15px; font-weight: 500; color: var(--text-main); transition: all 0.3s ease; background-color: #F8FAFC; font-family: inherit; }
+.form-input:focus { border-color: var(--primary); background-color: #FFFFFF; box-shadow: 0 0 0 4px var(--primary-glow); outline: none; }
+
+/* Modales */
+.modal-overlay { position: fixed; inset: 0; background-color: rgba(15, 23, 42, 0.5); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-content { background-color: var(--bg-surface); padding: 40px; border-radius: var(--radius-xl); width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-floating); border: 1px solid rgba(255,255,255,0.8); animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+/* Bitácora */
+.bitacora-item { background-color: #F8FAFC; padding: 20px; border-radius: var(--radius-md); border-left: 4px solid var(--primary); margin-bottom: 15px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 1px solid var(--border-color); }
+.bitacora-item:hover { transform: translateX(6px) scale(1.01); background-color: white; box-shadow: var(--shadow-md); border-color: var(--primary); }
+
+@keyframes slideFade { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }

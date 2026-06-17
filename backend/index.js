@@ -346,9 +346,6 @@ app.get('/api/ejercicios', async (req, res) => {
 // -------------------------------------------------------------
 // ENDPOINT: RF-06 y RF-07 Crear Plan y Generar Agenda Automática
 // -------------------------------------------------------------
-// -------------------------------------------------------------
-// ENDPOINT: RF-06 y RF-07 Crear Plan y Generar Agenda Automática
-// -------------------------------------------------------------
 app.post('/api/planes', async (req, res) => {
   try {
     const { id_paciente, plan_ejercicios } = req.body;
@@ -433,7 +430,10 @@ app.get('/api/agenda/:id_paciente/hoy', async (req, res) => {
 
     const agendaCruda = await prisma.agendaDiaria.findMany({
       where: { id_paciente: id_paciente, fecha: { gte: hoy, lt: manana } },
-      include: { ejercicio: true }
+      include: { 
+        ejercicio: true,
+        reporteEstado: true // <--- NUEVO: Incluimos esto para saber si ya evaluó
+      }
     });
 
     // Buscamos el plan recetado para extraer sus series y repeticiones
@@ -521,61 +521,90 @@ app.get('/api/alertas/:email_fisio', async (req, res) => {
   try {
     const { email_fisio } = req.params;
 
-    // Buscamos al fisio y anidamos la búsqueda hasta llegar a los reportes de estado
     const usuario = await prisma.usuario.findUnique({
       where: { email: email_fisio },
       include: {
-        perfilFisio: {
+        perfilFisio: { include: { pacientes: { include: { agendaDiaria: {
           include: {
-            pacientes: {
-              include: {
-                agendaDiaria: {
-                  include: {
-                    // Filtramos SOLO los reportes con dolor mayor a 7 y no leídos
-                    reporteEstado: {
-                      where: {
-                        nivel_dolor: { gt: 7 },
-                        leido: false
-                      }
-                    },
-                    ejercicio: true
-                  }
-                }
-              }
-            }
+            reporteEstado: { where: { nivel_dolor: { gt: 7 }, leido: false } },
+            ejercicio: true
           }
-        }
-      }
+        }}}}}}
     });
 
-    if (!usuario || !usuario.perfilFisio) {
-      return res.status(404).json({ error: 'Fisioterapeuta no encontrado' });
-    }
+    if (!usuario || !usuario.perfilFisio) return res.status(404).json({ error: 'Fisio no encontrado' });
 
-    // Aplanamos la información para entregarle al Frontend un arreglo limpio de alertas
-    let alertasCriticas = [];
-    
+    let mapaAlertas = new Map();
+
+    // AGRUPADOR INTELIGENTE (Filtro anti-duplicados para alertas)
     usuario.perfilFisio.pacientes.forEach(paciente => {
       paciente.agendaDiaria.forEach(agenda => {
-        // Como filtramos desde Prisma, si existe reporteEstado aquí, es porque el dolor es > 7
         if (agenda.reporteEstado) {
-          alertasCriticas.push({
-            id_reporte: agenda.reporteEstado.id_reporte,
-            paciente: paciente.nombre,
-            ejercicio: agenda.ejercicio.nombre,
-            nivel_dolor: agenda.reporteEstado.nivel_dolor,
-            comentarios: agenda.reporteEstado.comentarios,
-            fecha: agenda.reporteEstado.fecha_reporte
-          });
+          
+          let fechaStr = "SinFecha";
+          try {
+            const d = new Date(agenda.reporteEstado.fecha_reporte);
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            fechaStr = d.toISOString().split('T')[0];
+          } catch (e) {}
+
+          const key = `${paciente.id_paciente}-${fechaStr}`;
+
+          if (!mapaAlertas.has(key)) {
+            mapaAlertas.set(key, {
+              ids_reportes: [agenda.reporteEstado.id_reporte], // Guardamos todos los IDs de ese día
+              paciente: paciente.nombre,
+              ejercicios: [agenda.ejercicio.nombre], // Guardamos el nombre del ejercicio
+              nivel_dolor: agenda.reporteEstado.nivel_dolor,
+              comentarios: agenda.reporteEstado.comentarios,
+              fecha: agenda.reporteEstado.fecha_reporte
+            });
+          } else {
+            // Si ya existe la alerta de este día, simplemente le sumamos el ejercicio
+            const alerta = mapaAlertas.get(key);
+            alerta.ids_reportes.push(agenda.reporteEstado.id_reporte);
+            alerta.ejercicios.push(agenda.ejercicio.nombre);
+          }
         }
       });
     });
+
+    // Formateamos para el frontend
+    const alertasCriticas = Array.from(mapaAlertas.values()).map(alerta => ({
+      ids_reportes: alerta.ids_reportes,
+      paciente: alerta.paciente,
+      ejercicio: alerta.ejercicios.join(", "), // Une: "Sentadilla, Estiramiento..."
+      nivel_dolor: alerta.nivel_dolor,
+      comentarios: alerta.comentarios,
+      fecha: alerta.fecha
+    }));
 
     res.json(alertasCriticas);
 
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al obtener las alertas críticas' });
+  }
+});
+
+// -------------------------------------------------------------
+// ENDPOINT: Marcar alertas de dolor como leídas (MÚLTIPLES A LA VEZ)
+// -------------------------------------------------------------
+app.patch('/api/reportes/leido', async (req, res) => {
+  try {
+    const { ids_reportes } = req.body; // Ahora recibimos un arreglo de IDs
+
+    await prisma.reporteEstado.updateMany({
+      where: { 
+        id_reporte: { in: ids_reportes } 
+      },
+      data: { leido: true }
+    });
+
+    res.json({ message: 'Alertas marcadas como revisadas' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al actualizar el reporte' });
   }
 });
 

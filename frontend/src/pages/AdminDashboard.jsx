@@ -1,85 +1,142 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import '../styles/AdminDashboard.css';
 
 function AdminDashboard() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ nombre: '', email: '', password: '', confirmPassword: '', cedula: '' });
-  const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
+  const [fisios, setFisios] = useState([]);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [fisioData, setFisioData] = useState({
+    nombre: '',
+    especialidad: '',
+    cedula_profesional: '',
+    email: '',
+    password: ''
+  });
 
-  const cerrarSesion = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('rol');
-    navigate('/login');
+  const correoAdmin = localStorage.getItem('correo');
+
+  const fetchFisios = async () => {
+    try {
+      const response = await axios.get('http://localhost:3000/api/fisios');
+      setFisios(response.data);
+    } catch (error) {
+      console.error("Error al cargar fisioterapeutas:", error);
+    }
   };
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  useEffect(() => {
+    fetchFisios();
+  }, []);
+
+  const cerrarSesion = () => {
+    localStorage.clear();
+    navigate('/login');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      setMensaje({ texto: 'Las contraseñas no coinciden.', tipo: 'error' });
-      return;
-    }
-    setMensaje({ texto: 'Registrando fisioterapeuta...', tipo: 'loading' });
-
     try {
-      // Reutilizamos el endpoint seguro que ya habías creado en el backend
-      await axios.post('http://localhost:3000/api/registro', {
-        nombre: formData.nombre,
-        email: formData.email,
-        password: formData.password,
-        cedula: formData.cedula
-      });
-
-      setMensaje({ texto: '¡Fisioterapeuta registrado con éxito!', tipo: 'success' });
-      setFormData({ nombre: '', email: '', password: '', confirmPassword: '', cedula: '' }); // Limpiar formulario
-      
-      setTimeout(() => setMensaje({ texto: '', tipo: '' }), 3000);
+      await axios.post('http://localhost:3000/api/fisios', fisioData);
+      alert("¡Fisioterapeuta registrado con éxito!");
+      setFisioData({ nombre: '', especialidad: '', cedula_profesional: '', email: '', password: '' });
+      setMostrarFormulario(false);
+      fetchFisios();
     } catch (error) {
-      setMensaje({ texto: error.response?.data?.error || 'Error al conectar con el servidor', tipo: 'error' });
+      alert(error.response?.data?.error || "Hubo un error al registrar");
     }
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'sans-serif' }}>
+    <div className="admin-wrap">
+      
       {/* Panel Lateral */}
-      <div style={{ width: '250px', backgroundColor: '#111827', color: 'white', padding: '20px', display: 'flex', flexDirection: 'column' }}>
+      <aside className="admin-sidebar">
         <h2>FisioNotes</h2>
-        <p style={{ color: '#9CA3AF', fontSize: '14px' }}>Panel de Administrador</p>
-        <nav style={{ marginTop: '30px', flexGrow: 1 }}>
-          <a style={{ color: 'white', textDecoration: 'none', fontWeight: 'bold', display: 'block', padding: '8px', backgroundColor: '#374151', borderRadius: '4px' }}>
-            🏥 Alta de Personal
+        <span className="role-name">Administrador Root</span>
+        <nav className="sidebar-nav" style={{ marginTop: '30px' }}>
+          <a className="sidebar-link active">
+            <span>👨‍⚕️ Fisioterapeutas</span>
+          </a>
+          <a className="sidebar-link" style={{ opacity: 0.5, cursor: 'not-allowed' }} title="Próximamente">
+            <span>⚙️ Ajustes de Sistema</span>
           </a>
         </nav>
-        <button onClick={cerrarSesion} style={{ padding: '10px', backgroundColor: '#EF4444', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Salir</button>
-      </div>
+        <button onClick={cerrarSesion} className="btn btn-danger" style={{ marginTop: 'auto' }}>
+          Salir del Sistema
+        </button>
+      </aside>
 
       {/* Contenido Principal */}
-      <div style={{ flexGrow: 1, padding: '40px', backgroundColor: '#F3F4F6' }}>
-        <h1 style={{ color: '#1F2937', marginBottom: '20px' }}>Registrar Nuevo Fisioterapeuta</h1>
+      <main className="admin-main">
         
-        <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', maxWidth: '500px' }}>
-          {mensaje.texto && (
-            <div style={{ padding: '10px', marginBottom: '20px', borderRadius: '6px', textAlign: 'center', backgroundColor: mensaje.tipo === 'error' ? '#FEE2E2' : '#D1FAE5', color: mensaje.tipo === 'error' ? '#991B1B' : '#065F46' }}>
-              {mensaje.texto}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} required placeholder="Nombre del Profesional (ej. Dr. Ruiz)" style={{ padding: '10px', border: '1px solid #D1D5DB', borderRadius: '6px' }} />
-            <input type="text" name="cedula" value={formData.cedula} onChange={handleChange} required placeholder="Cédula Profesional" style={{ padding: '10px', border: '1px solid #D1D5DB', borderRadius: '6px' }} />
-            <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="Correo Electrónico" style={{ padding: '10px', border: '1px solid #D1D5DB', borderRadius: '6px' }} />
-            <input type="password" name="password" value={formData.password} onChange={handleChange} required placeholder="Contraseña de acceso" style={{ padding: '10px', border: '1px solid #D1D5DB', borderRadius: '6px' }} />
-            <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required placeholder="Confirmar Contraseña" style={{ padding: '10px', border: '1px solid #D1D5DB', borderRadius: '6px' }} />
-            <button type="submit" style={{ padding: '12px', backgroundColor: '#10B981', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
-              + Dar de Alta Fisioterapeuta
-            </button>
-          </form>
+        <div className="admin-header">
+          <div>
+            <h1 style={{ margin: 0 }}>Gestión de Personal Médico</h1>
+            <p style={{ color: 'var(--text-muted)', margin: '5px 0 0 0' }}>Administra los accesos de los fisioterapeutas de tu clínica.</p>
+          </div>
+          <button onClick={() => setMostrarFormulario(!mostrarFormulario)} className="btn btn-admin">
+            {mostrarFormulario ? 'Cancelar Registro' : '+ Nuevo Fisioterapeuta'}
+          </button>
         </div>
-      </div>
+
+        {/* Formulario Nuevo Fisio */}
+        {mostrarFormulario && (
+          <div className="admin-card" style={{ borderTopColor: '#10B981' }}>
+            <h3 style={{ marginTop: 0 }}>Registrar Fisioterapeuta</h3>
+            <form onSubmit={handleSubmit} className="input-group">
+              <div className="input-row">
+                <input type="text" className="form-input" placeholder="Nombre Completo (Ej. Dr. Juan Pérez)" value={fisioData.nombre} onChange={(e) => setFisioData({...fisioData, nombre: e.target.value})} required />
+                <input type="text" className="form-input" placeholder="Especialidad (Ej. Deportiva)" value={fisioData.especialidad} onChange={(e) => setFisioData({...fisioData, especialidad: e.target.value})} required />
+                <input type="text" className="form-input" placeholder="Cédula Profesional" value={fisioData.cedula_profesional} onChange={(e) => setFisioData({...fisioData, cedula_profesional: e.target.value})} required />
+              </div>
+              <div className="input-row">
+                <input type="email" className="form-input" placeholder="Correo Electrónico (Para iniciar sesión)" value={fisioData.email} onChange={(e) => setFisioData({...fisioData, email: e.target.value})} required />
+                <input type="password" className="form-input" placeholder="Contraseña Temporal" value={fisioData.password} onChange={(e) => setFisioData({...fisioData, password: e.target.value})} required />
+              </div>
+              <button type="submit" className="btn btn-admin" style={{ alignSelf: 'flex-start', marginTop: '10px' }}>
+                Dar de Alta en el Sistema
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Tabla del Personal */}
+        <div className="admin-card">
+          {fisios.length === 0 ? (
+            <p style={{ color: 'var(--text-muted)' }}>No hay fisioterapeutas registrados actualmente.</p>
+          ) : (
+            <table className="styled-table">
+              <thead>
+                <tr>
+                  <th>Doctor(a)</th>
+                  <th>Especialidad</th>
+                  <th>Cédula</th>
+                  <th>Pacientes Activos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fisios.map((f) => (
+                  <tr key={f.id_fisio}>
+                    <td>
+                      <strong style={{ color: 'var(--text-main)' }}>{f.nombre}</strong><br/>
+                      <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{f.usuario?.email}</span>
+                    </td>
+                    <td>{f.especialidad}</td>
+                    <td><code style={{ backgroundColor: '#F3F4F6', padding: '4px 8px', borderRadius: '4px', fontSize: '13px' }}>{f.cedula_profesional}</code></td>
+                    <td>
+                      <span style={{ backgroundColor: '#EFF6FF', color: '#3B82F6', padding: '4px 12px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
+                        {f.pacientes ? f.pacientes.length : 0}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </main>
     </div>
   );
 }

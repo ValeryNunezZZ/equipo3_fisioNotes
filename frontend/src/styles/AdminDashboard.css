@@ -1,0 +1,71 @@
+/* ==========================================
+   DISEÑO DEL ADMIN (Estilo Inmersivo y Luminoso)
+   ========================================== */
+.admin-wrap { display: flex; height: 100vh; overflow: hidden; background-color: var(--bg-app); }
+
+/* Menú Lateral: Glassmorphism luminoso */
+.admin-sidebar {
+  width: 280px; 
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  padding: 40px 25px; display: flex; flex-direction: column;
+  border-right: 1px solid rgba(226, 232, 240, 0.6); box-shadow: var(--shadow-sm); z-index: 10;
+}
+
+.admin-sidebar h2 { margin: 0; font-size: 28px; color: var(--text-main); font-weight: 800; }
+.admin-sidebar .role-name { color: #8B5CF6; font-size: 14px; font-weight: 700; letter-spacing: 1px; margin-bottom: 40px; display: block; margin-top: 5px; text-transform: uppercase; }
+
+.sidebar-nav { display: flex; flex-direction: column; gap: 12px; flex-grow: 1; }
+.sidebar-link {
+  color: var(--text-muted); text-decoration: none; padding: 16px 20px; border-radius: var(--radius-lg);
+  cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: space-between;
+}
+.sidebar-link:hover { transform: translateX(6px) scale(1.02); background: #F8FAFC; color: var(--text-main); }
+.sidebar-link.active { 
+  background: linear-gradient(145deg, #ffffff 0%, #F5F3FF 100%); 
+  color: #8B5CF6; border: 1px solid #8B5CF6; 
+  box-shadow: 0 10px 25px rgba(139, 92, 246, 0.15); 
+}
+
+/* Contenido Principal */
+.admin-main { flex-grow: 1; padding: 50px; overflow-y: auto; scroll-behavior: smooth; animation: slideFade 0.6s ease-out; }
+.admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
+.admin-header h1 { font-size: 32px; margin: 0; color: var(--text-main); }
+.admin-header p { color: var(--text-muted); margin-top: 8px; font-size: 15px; }
+
+/* Tarjetas Animadas (Iguales a la evaluación del paciente) */
+.admin-card { 
+  background-color: var(--bg-surface); padding: 35px; border-radius: var(--radius-xl); 
+  box-shadow: var(--shadow-sm); margin-bottom: 35px; border: 1px solid var(--border-color); 
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+}
+.admin-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-floating); border-color: #8B5CF6; }
+
+/* Filas Flotantes Bouncy para la Tabla */
+.styled-table { width: 100%; border-collapse: separate; border-spacing: 0 15px; margin-top: -15px; }
+.styled-table th { padding: 0 20px; text-align: left; border: none; color: var(--text-muted); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.styled-table td { background-color: var(--bg-surface); padding: 20px; border: 1px solid var(--border-color); border-width: 1px 0; vertical-align: middle; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.styled-table td:first-child { border-radius: var(--radius-lg) 0 0 var(--radius-lg); border-left: 1px solid var(--border-color); }
+.styled-table td:last-child { border-radius: 0 var(--radius-lg) var(--radius-lg) 0; border-right: 1px solid var(--border-color); }
+.styled-table tbody tr { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+/* Efecto de salto e iluminación morada */
+.styled-table tbody tr:hover td { transform: scale(1.01) translateY(-3px); box-shadow: var(--shadow-floating); border-color: #8B5CF6; z-index: 2; position: relative; background: linear-gradient(145deg, #ffffff 0%, #F5F3FF 100%); }
+
+/* Botones Administrativos */
+.btn { padding: 14px 24px; border: none; border-radius: var(--radius-md); font-weight: 700; font-size: 14px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+.btn-admin { background-color: #8B5CF6; color: white; }
+.btn-admin:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3); }
+.btn-danger { background-color: var(--danger); color: white; }
+.btn-danger:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3); }
+
+/* Inputs */
+.form-input { width: 100%; padding: 14px 16px; border: 2px solid var(--border-color); border-radius: var(--radius-md); font-size: 15px; color: var(--text-main); background-color: #F8FAFC; transition: all 0.3s ease; font-family: inherit; }
+.form-input:focus { border-color: #8B5CF6; background-color: #FFFFFF; box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15); outline: none; }
+
+/* Etiquetas de la Tabla */
+.styled-table strong { font-size: 16px; color: var(--text-main); display: block; margin-bottom: 4px; transition: color 0.3s; }
+.styled-table tr:hover strong { color: #8B5CF6; }
+.styled-table code { background-color: #F8FAFC; color: var(--text-muted); padding: 6px 12px; border-radius: 8px; font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 1px; border: 1px solid var(--border-color); }
+
+@keyframes slideFade { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
